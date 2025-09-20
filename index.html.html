@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Красивый сайт регистрации</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 20px;
+        background: linear-gradient(135deg, #6dd5ed, #2193b0); /* градиентный фон */
+    }
+    .card {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        width: 320px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(6px);
+    }
+    .registration-form h2, .user-list h3 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .registration-form input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        outline: none;
+        transition: border 0.3s;
+    }
+    .registration-form input:focus {
+        border: 1px solid #2196F3;
+        box-shadow: 0 0 5px #2196F3;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        color: white;
+        transition: transform 0.2s, box-shadow 0.3s;
+    }
+    button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 12px rgba(0,0,0,0.2);
+    }
+    .reg-btn { background-color: #4CAF50; }
+    .reg-btn:hover { background-color: #45a049; }
+    .clear-btn {
+        background-color: #FF9800;
+    }
+    .clear-btn:hover {
+        background-color: #E53935;
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px #E53935; }
+        50% { box-shadow: 0 0 20px #FF1744; }
+        100% { box-shadow: 0 0 5px #E53935; }
+    }
+    /* Прыжок кнопки при успехе */
+    .jump {
+        animation: jump 0.5s;
+    }
+    @keyframes jump {
+        0% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+        60% { transform: translateY(5px); }
+        100% { transform: translateY(0); }
+    }
+    .user-list ul { list-style: none; padding: 0; margin: 0; }
+    .user-list li {
+        padding: 8px 10px;
+        margin: 5px 0;
+        border-radius: 8px;
+        background: #f9f9f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.5s, color 0.5s;
+    }
+    .user-list li:hover {
+        background-color: #2196F3;
+        color: white;
+    }
+    .user-list button {
+        background-color: #f44336;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .user-list button:hover {
+        background-color: #FFB300;
+        color: black;
+        transform: scale(1.1);
+    }
+    .message {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+    .error { color: red; }
+    .success { color: green; }
+</style>
+</head>
+<body>
+
+<div class="card registration-form" id="regCard">
+    <h2>Регистрация</h2>
+    <form id="regForm">
+        <input type="text" id="name" placeholder="Имя" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button type="submit" class="reg-btn" id="regBtn">Зарегистрироваться</button>
+        <div class="message" id="message"></div>
+    </form>
+</div>
+
+<button class="clear-btn card" id="clearUsersBtn">Очистить всех пользователей</button>
+
+<div class="card user-list" id="userList">
+    <h3>Зарегистрированные пользователи</h3>
+    <ul id="users"></ul>
+</div>
+
+<script>
+const form = document.getElementById('regForm');
+const regBtn = document.getElementById('regBtn');
+const usersUl = document.getElementById('users');
+const messageDiv = document.getElementById('message');
+const clearBtn = document.getElementById('clearUsersBtn');
+
+let users = JSON.parse(localStorage.getItem('users')) || [];
+displayUsers();
+
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    messageDiv.textContent = '';
+    messageDiv.className = 'message';
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if(users.some(user => user.email === email)) {
+        messageDiv.textContent = 'Этот email уже зарегистрирован!';
+        messageDiv.classList.add('error');
+        return;
+    }
+
+    const user = { name, email, password };
+    users.push(user);
+    localStorage.setItem('users', JSON.stringify(users));
+    displayUsers(true);
+    form.reset();
+
+    messageDiv.textContent = 'Вы успешно зарегистрированы!';
+    messageDiv.classList.add('success');
+
+    // Прыжок кнопки
+    regBtn.classList.add('jump');
+    setTimeout(() => regBtn.classList.remove('jump'), 500);
+
+    setTimeout(() => { messageDiv.textContent = ''; }, 3000);
+});
+
+function displayUsers(highlightLast = false) {
+    usersUl.innerHTML = '';
+    users.forEach((user, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${user.name} (${user.email})`;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Удалить';
+        deleteBtn.addEventListener('click', () => {
+            li.style.opacity = 0;
+            li.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                users.splice(index, 1);
+                localStorage.setItem('users', JSON.stringify(users));
+                displayUsers();
+            }, 500);
+        });
+
+        li.appendChild(deleteBtn);
+        usersUl.appendChild(li);
+
+        if(highlightLast && index === users.length - 1) {
+            li.style.backgroundColor = "#c8f7c5";
+            setTimeout(() => li.style.backgroundColor = "#f9f9f9", 2000);
+        }
+    });
+}
+
+clearBtn.addEventListener('click', () => {
+    if(confirm('Вы уверены, что хотите удалить всех пользователей?')) {
+        usersUl.querySelectorAll('li').forEach(li => {
+            li.style.opacity = 0;
+            li.style.transform = 'translateY(-10px)';
+        });
+        setTimeout(() => {
+            users = [];
+            localStorage.removeItem('users');
+            displayUsers();
+        }, 500);
+    }
+});
+</script>
+
+</body>
+</html>
